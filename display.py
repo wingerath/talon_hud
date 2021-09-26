@@ -92,8 +92,8 @@ class HeadUpDisplay:
         self.keep_alive_pollers = ['status', 'history']
         
         # Uncomment the line below to add language icons by default
-        # self.subscribe_content_id('status_bar', 'language')
-        
+        self.subscribe_content_id('status_bar', 'language')
+
     def start(self):
         if (self.preferences.prefs['enabled']):
             self.enable()    	
