@@ -1,6 +1,5 @@
 from talon import actions, cron, scope, speech_system, ui, app
 from user.talon_hud.content.poller import Poller
-from talon_plugins import menu
 
 # Handles state of phrases
 # Inspired by the command history from knausj
