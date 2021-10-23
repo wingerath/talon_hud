@@ -16,13 +16,14 @@ from user.talon_hud.widgets.abilitybar import HeadUpAbilityBar
 from user.talon_hud.widgets.textpanel import HeadUpTextPanel
 from user.talon_hud.widgets.choicepanel import HeadUpChoicePanel
 from user.talon_hud.widgets.documentationpanel import HeadUpDocumentationPanel
+from user.talon_hud.widgets.walkthroughpanel import HeadUpWalkThroughPanel
 from user.talon_hud.widgets.contextmenu import HeadUpContextMenu
 from user.talon_hud.content.typing import HudPanelContent, HudButton
 from user.talon_hud.content.poller import Poller
 from user.talon_hud.utils import string_to_speakable_string
 
 # Taken from knausj/code/numbers to make Talon HUD standalone
-# The numbers should realistically stay very low for choices, because you dont want choice overload for the user, up to 100
+# The numbers should realistically stay very low for choices, because you don't want choice overload for the user, up to 100
 digits = "zero one two three four five six seven eight nine".split()
 teens = "ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split()
 tens = "twenty thirty forty fifty sixty seventy eighty ninety".split()
@@ -48,6 +49,12 @@ mod.tag("talon_hud_visible", desc="Tag that shows that the Talon HUD is visible"
 mod.tag("talon_hud_choices_visible", desc="Tag that shows there are choices available on screen that can be chosen")
 
 ctx.tags = ['user.talon_hud_available']
+
+# A list of Talon HUD versions that can be used to check for in other packages
+TALON_HUD_RELEASE_030 = 3
+@mod.scope
+def scope():
+    return {"talon_hud_version": TALON_HUD_RELEASE_030}
 
 class HeadUpDisplay:
     enabled = False
@@ -80,6 +87,9 @@ class HeadUpDisplay:
             # HeadUpTextPanel('Text box two', self.preferences.prefs, self.theme, {'topics': ['your_topic_here'], 'current_topic': 'your_topic_here'}),
             HeadUpChoicePanel('Choices', self.preferences.prefs, self.theme, {'topics': ['choice'], 'current_topic': 'choice'}),
 
+            HeadUpAbilityBar('ability_bar', self.preferences.prefs, self.theme),
+            HeadUpWalkThroughPanel('walk_through', self.preferences.prefs, self.theme, {'topics': ['walk_through']}),
+
             # Special widgets that have varying positions
             HeadUpContextMenu('context_menu', self.preferences.prefs, self.theme),
         ]
@@ -93,11 +103,16 @@ class HeadUpDisplay:
         
         # Uncomment the line below to add language icons by default
         self.subscribe_content_id('status_bar', 'language')
-
     def start(self):
+        # Uncomment the line below to add the single click mic toggle by default
+        # actions.user.hud_add_single_click_mic_toggle()
+
         if (self.preferences.prefs['enabled']):
-            self.enable()    	
+            self.enable()
             
+            if actions.sound.active_microphone() == "None":
+                actions.user.hud_add_log("warning", "Microphone is set to 'None'!\n\nNo voice commands will be registered.")
+
     def enable(self, persisted=False):
         if not self.enabled:
             self.enabled = True
@@ -160,7 +175,11 @@ class HeadUpDisplay:
             if not widget.enabled and widget.id == id:
                 widget.enable(True)
                 if widget.topic in self.pollers and not self.pollers[widget.topic].enabled:
-                	self.pollers[widget.topic].enable()                
+                	self.pollers[widget.topic].enable()
+
+                if isinstance(widget, HeadUpTextPanel) and widget.panel_content.tags != None \
+                   and len(widget.panel_content.tags) > 0:
+                   self.update_context()
 
     def disable_id(self, id):
         for widget in self.widgets:
@@ -168,6 +187,10 @@ class HeadUpDisplay:
                 widget.disable(True)
                 if widget.topic in self.pollers and widget.topic not in self.keep_alive_pollers:
                 	self.pollers[widget.topic].disable()
+
+                if isinstance(widget, HeadUpTextPanel) and widget.panel_content.tags != None \
+                   and len(widget.panel_content.tags) > 0:
+                   self.update_context()
         self.determine_active_setup_mouse()
         
     def subscribe_content_id(self, id, content_key):
@@ -449,7 +472,12 @@ class HeadUpDisplay:
                 if choice_title:
                     for widget_name in current_widget_names:
                         quick_choices[widget_name + " " + choice_title] = widget.id + "|" + str(index)
-            
+
+            # Add tags set for specific content on display
+            if widget.enabled and isinstance(widget, HeadUpTextPanel) and widget.panel_content.tags is not None:
+                for index, tag in enumerate(widget.panel_content.tags):
+                    tags.append(tag)
+
             # Add context choices
             if widget.enabled and isinstance(widget, HeadUpContextMenu):
                 for index, button in enumerate(widget.buttons):
