@@ -1,4 +1,4 @@
-from talon import skia, ui, Module, cron, actions, clip
+from talon import skia, ui, cron, actions, clip
 from user.talon_hud.layout_widget import LayoutWidget
 from user.talon_hud.widget_preferences import HeadUpDisplayUserWidgetPreferences
 from user.talon_hud.utils import layout_rich_text, remove_tokens_from_rich_text, linear_gradient, hit_test_icon
@@ -106,11 +106,11 @@ class HeadUpTextPanel(LayoutWidget):
                 self.footer_icon_hovered = -1
                 clicked_icon.callback(self)
 
-        if event.button == 1 and event.event == "mouseup":            
-            actions.user.show_context_menu(self.id, event.gpos.x, event.gpos.y, self.buttons)
+        if event.button == 1 and event.event == "mouseup":
+            self.event_dispatch.show_context_menu(self.id, event.gpos, self.buttons)
 
         if event.button == 0 and event.event == "mouseup":
-            actions.user.hide_context_menu()
+            self.event_dispatch.hide_context_menu()
 
         # Allow dragging and dropping with the mouse
         if icon_hovered == -1 and footer_icon_hovered == -1:
@@ -345,7 +345,7 @@ class HeadUpTextPanel(LayoutWidget):
         footer_height = dimensions["header_height"]
         dimensions = dimensions["rect"]
 
-        # Small divider between the content and the header
+        # Small divider between the content and the footer
         x = dimensions.x + self.padding[3]
         start_y = dimensions.y + dimensions.height - self.padding[0] - self.padding[2] / 2        
         for index, icon in enumerate(self.footer_icons):

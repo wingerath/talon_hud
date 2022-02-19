@@ -1,4 +1,4 @@
-from talon import skia, ui, Module, cron, actions, clip
+from talon import skia, ui, cron, clip
 from talon.types import Point2d as Point2d
 from user.talon_hud.base_widget import BaseWidget
 from user.talon_hud.layout_widget import LayoutWidget
@@ -27,7 +27,7 @@ class HeadUpContextMenu(LayoutWidget):
     button_hovered = -1
     default_buttons = [
         HudButton(None, 'Close panel', ui.Rect(0, 0, 0, 0), close_widget),
-        HudButton(None, 'Cancel options', ui.Rect(0, 0, 0, 0), noop)
+        HudButton(None, 'Dismiss options', ui.Rect(0, 0, 0, 0), noop)
     ]
     buttons = []
 
@@ -35,6 +35,7 @@ class HeadUpContextMenu(LayoutWidget):
     content = {
         'mode': 'command'
     }
+    panel_content = None
     animation_max_duration = 0
         
     def on_mouse(self, event):
@@ -57,7 +58,7 @@ class HeadUpContextMenu(LayoutWidget):
             self.button_hovered = -1
             if self.connected_widget:
                 self.buttons[button_index].callback(self.connected_widget)
-            actions.user.hide_context_menu()
+                self.event_dispatch.hide_context_menu()
     
     def connect_widget(self, widget: BaseWidget, pos_x: int, pos_y: int, buttons: list[HudButton]):        
         # Connect a widget up to context menu and move the context menu over
