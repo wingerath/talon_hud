@@ -65,7 +65,10 @@ def toggle_microphone(self, _ = None):
         else:
             actions.user.hud_add_log("warning", "Could not find " + prefered_microphone + ".\nUsing system default")
             actions.sound.set_microphone("System Default")
-        
+#            actions.sound.set_microphone("Analogue 1 + 2 (Focusrite Usb Audio)")
+#            actions.sound.set_microphone("Krisp Microphone (Krisp Audio)")
+            actions.sound.set_microphone("VoiceMeeter Output (VB-Audio VoiceMeeter VAIO)")
+
 def select_microphone(choice):
     set_prefered_microphone(choice["text"])
     actions.sound.set_microphone(choice["text"])
